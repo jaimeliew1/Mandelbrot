@@ -49,18 +49,19 @@ class MandelbrotImage(object):
      location.
     """
 
-    def __init__(self, x, y, width, num_steps, figsize=4, nx=500, fps=20):
+    def __init__(self, x, y, width, duration, figsize=4, nx=500, fps=20):
         """
         args:
             X (float): X (real) coordinate of interest.
             Y (float): Y (imaginary) coordinate of interest.
-            R (float): Frame 'radius'.
-            T_max (float): GIF length in seconds.
+            width (float): Frame width.
+            duration (float): GIF duration in seconds.
             figsize (float): figure side length (default=4).
             nx (int): X and Y discretisation (default=500).
+            fps (int): frames per second.
         """
         self.mandelbrot_gen = mandelbrot(x, y, width, nx=nx)
-        self.num_steps = num_steps
+        self.duration = duration
         self.figsize = figsize
         self.fps = fps
         self.image = np.zeros((nx, nx))
@@ -71,7 +72,7 @@ class MandelbrotImage(object):
             figure plotting the cumulative iterations.
         """
         mand = next(self.mandelbrot_gen)
-        self.image += np.array(mand, dtype=float) * t / self.num_steps
+        self.image += np.array(mand, dtype=float) * t / self.duration
 
         fig = plt.figure(figsize=(self.figsize, self.figsize))
         plt.imshow(self.image.T,
@@ -87,7 +88,7 @@ class MandelbrotImage(object):
             plt.close(fig)
             return img
 
-        animation = VideoClip(make_frame, duration=self.num_steps)
+        animation = VideoClip(make_frame, duration=self.duration)
         animation.write_gif(file_name, fps=self.fps)
 
 
@@ -110,8 +111,8 @@ def parse_args():
                         help="Center of Mandlebrot image in y.")
     manual.add_argument("-w", "--width", dest="width", default=4.0E-5, type=float,
                         help="Width of Mandelbrot image in xy plane.")
-    manual.add_argument("-s", "--seconds", dest="seconds", default=10, type=int,
-                        help="Number of seconds the output gif is.")
+    manual.add_argument("-s", "--seconds", dest="seconds", default=10, type=float,
+                        help="Duration of gif in seconds.")
     manual.add_argument("--fps", dest="fps", default=20, type=int,
                         help="Frames per second for the output gif.")
 
@@ -122,15 +123,15 @@ if __name__ == '__main__':
     args = parse_args()
 
     if args.demo:
-        params = {  # filename: (X, Y, R, T_max)
+        params = {  # filename: (X, Y, R, duration)
             'out1.gif': (-0.235125, 0.827215, 4.0E-5, 10),
             'out2.gif': (-0.925, -0.266, 0.032, 10),
             'out3.gif': (-0.745428, 0.113009, 3e-5, 10),
             'out4.gif': (-0.748, 0.1, 0.0014, 20),
         }
 
-        for filename, (X, Y, R, T_max) in params.items():
-            mandelbrot_gif = MandelbrotImage(X, Y, R, T_max)
+        for filename, (X, Y, R, duration) in params.items():
+            mandelbrot_gif = MandelbrotImage(X, Y, R, duration)
             mandelbrot_gif.make_gif(filename)
     else:
         mandelbrot_gif = MandelbrotImage(args.x, args.y, args.width, args.seconds, 4, args.dims, args.fps)
